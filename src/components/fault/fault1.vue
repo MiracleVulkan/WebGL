@@ -1,8 +1,7 @@
 <template>
   <div>
       <div>
-        <p>{{this.src}}</p>
-        <img :src="this.src">
+        <img :src="imagePath">
       </div>
   </div>
 </template>
@@ -14,18 +13,28 @@ export default {
       return {
           items:[],
           price:0.0,
-          src:"src",
-          title:"fruit"
+          src:"fault1.jpg",
+          title:"fruit",
       }
   },
-  created(){
+  beforeCreate(){
       this.$http.get('/api/goods').then((data) => {
       this.items = data.body.data;
       this.price = this.items[0].price;
       this.title = this.items[0].title;
       this.src = this.items[0].img;
-      // console.log(this.price);
       })
+  },
+  computed:{
+    computeItems:function(){
+    },
+    imagePath:function(){
+      if(this.src !== undefined) //因为第一次为空
+      {
+        let imginfo = require("../../assets/" + this.src);
+        return imginfo;
+      }
+    }
   }
 }
 </script>
