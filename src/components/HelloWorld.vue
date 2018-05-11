@@ -21,7 +21,7 @@ export default {
   created () {
       this.$http.get('/api/goods').then((data) => {
       this.items = data.body.data;
-      console.log(this.items);
+      // console.log(this.items);
       })
       Test.myfun();
   }

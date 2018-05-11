@@ -33,9 +33,6 @@ export default {
   methods: {
     init: function() {
         var container = document.getElementById('three_canvas');
-
-        console.log(container);
-        console.log(container.clientHeight);
         this.camera = new Three.PerspectiveCamera(70, container.clientWidth/container.clientHeight, 1, 10000);
         this.camera.position.z = 1000;
 
