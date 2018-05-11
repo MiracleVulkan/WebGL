@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
+    <link rel="stylesheet" href="css/style.css" type="text/css">
+    <title>TFViewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+
+    <style type="text/css">
+
+        #three_canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            background: #11e8bb; /* Old browsers */
+            background: -moz-linear-gradient(top,  #75C8EB 0%, #FFFFFF 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top,  #75C8EB 0%, #FFFFFF 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom,  #75C8EB 0%, #FFFFFF 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        }
+        #home{
+            position: absolute;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="js/three.js"></script>
+    <script src="js/ObjectLoaders.js"></script>
+    <script src="js/TrackballControls.js"></script>
+    <!--<script src="Radial_Engine.json/models.js"></script>-->
+    <script src="js/dynatree/jquery.min.js" type="text/javascript"></script>
+    <script src="js/dynatree/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <link href="js/dynatree/skin/ui.dynatree.css" type="text/css" rel="stylesheet">
+    <script src="js/dynatree/jquery.dynatree.min.js" type="text/javascript"></script>
+    <script src="js/support.js" type="text/javascript"></script>
+    <script src="js/zlib.js" type="text/javascript"></script>
+    <script src="js/Lut.js" type="text/javascript"></script>
+
+
+
+
+    <div class="select_contain" style="display: none">
+        <div class="select_item clearfix left">
+            <div class="select_module_con left">
+                <div class="select_result">
+                    <!--<span id="colorType">Pressure</span>-->
+                    <div class="triangle"></div>
+                </div>
+                <!--<ul>-->
+                <!--<li>Temperature</li>-->
+                <!--<li>Pressure</li>-->
+                <!--<li>Speed</li>-->
+                <!--</ul>-->
+            </div>
+        </div>
+    </div>
+
+    <div class="wrap left">
+        <div class = "wrap-content">
+            <div class="wrap-text left">后处理：</div>
+            <input type="checkbox" id="s4" onclick="cli(this)" />
+            <label class="slider-v2 left " for="s4"></label>
+
+            <div class="wrap-text left">边框线：</div>
+            <input type="checkbox" id="s5" checked="" onclick="meshEdge(this)" />
+            <label class="slider-v2 left " for="s5"></label>
+        </div>
+    </div>
+
+    <div id="home">
+        <a class="button is-large is-warning homeIcon" onClick="javascript :history.back(-1);">
+            <span class="icon is-medium">
+                <i class="fas fa-home"></i>
+            </span>
+        </a>
+    </div>
+
+    <!--<div class="adsk-viewing-viewer notouch">-->
+        <!--<div id="ViewerModelStructurePanel" class="dockingPanel modelStructurePanel">-->
+            <!--<div class="dockingPanelTitle">Brower </div>-->
+            <!--<div class="dockingPanelClose" onclick="xx()">X</div>-->
+            <!--<input class="toolbar-search-box" type="search" incremental="incremental" placeholder="Filter by name"></input>-->
+            <!--<div class="dockingPanelScroll left" id="ViewerModelStructurePanel-scroll-container" style="height: calc(100% - 75px);">-->
+                <!--<div class="treeview">-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+    <!--</div>-->
+
+
+    <canvas id="three_canvas">
+		<canvas id="hudCanvas"></canvas>
+    </canvas>
+
+
+    <script>
+        var scene = new THREE.Scene();
+        var mash;
+        var geometryArray;
+        var camera;
+        var cameraHUD;
+        var sceneHUD;
+        var LutCamera;
+        var LutScene;
+        var lut;
+        var sceneVector = [];
+        var lutSceneVector = [];
+        var originMaterialsVector = [];
+        var nameUUIDMap = [];
+        var meshTypeColorMap = [];//存储后处理名称和对应的颜色数组，有存储功能，方便下次调用
+        var lutVisible;
+
+        var colorMap = 'rainbow';
+        var numberOfColors = 512;
+        var legendLayout = 'vertical';
+        var legend;
+        var labels;
+        var lutMax;
+        var lutMin;
+
+        // var stats;
+        var aabbMin = new THREE.Vector3();
+        var aabbMax = new THREE.Vector3();
+
+        aabbMax.x = -1.7976931348623157e+308;
+        aabbMax.y = -1.7976931348623157e+308;
+        aabbMax.z = -1.7976931348623157e+308;
+        aabbMin.x = 1.7976931348623157e+308;
+        aabbMin.y = 1.7976931348623157e+308;
+        aabbMin.z = 1.7976931348623157e+308;
+
+        var dirVec = new THREE.Vector3(0.0, 0.0, 1.0);
+        var mouseVector = new THREE.Vector3();
+        var meshName = [];
+
+        var postPressMaterial =  new THREE.MeshBasicMaterial({
+            vertexColors: THREE.VertexColors,
+            side: THREE.DoubleSide
+        });
+
+        // Create shortcuts for window size.
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        // Create camera and move it a bit further. Make it to look to origo.
+        camera = new THREE.PerspectiveCamera(70, width / height, 0.1, 10000000);
+        camera.position.y = 0;
+        camera.position.x = 0;
+        camera.position.z = 20000;
+        camera.lookAt(scene.position);
+
+        var mouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
+        var objects = [];
+        // Create renderer.
+        var renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('three_canvas'),antialias: true, alpha: true
+        });
+        renderer.setSize(width, height);
+        renderer.autoClear = false;
+        renderer.setClearColor(0x000000, 0.0);
+
+        document.body.appendChild(renderer.domElement);
+        //         scene.background = new THREE.Color(0xff0000);
+
+        var loader = new THREE.ObjectLoaders();
+        LutScene = new THREE.Scene();
+
+        colorMap = 'rainbow';
+        numberOfColors = 512;
+        lut = new THREE.Lut(colorMap, numberOfColors);
+
+        loader.load('./models/model3.gz', function(result) {
+            scene = result;
+
+            zoomExtents(aabbMin, aabbMax);
+//            createViewTree();
+            fitAll();
+
+            lutMax = scene.pressureMax;
+            lutMin = scene.pressureMin;
+            for (var i = 0; i < scene.children.length; i++) {
+                if (scene.children[i].type != "Object3D" &&  scene.children[i].type != "Group")
+                    continue;
+                originMaterialsVector[scene.children[i].uuid] = scene.children[i].children[0].material;
+            }
+            scene.hasVertexColors = false;
+            scene.vertexColorType = undefined;
+            // lights
+
+            var boundBoxCenter = new THREE.Vector3((aabbMax.x + aabbMin.x) / 2.0 , (aabbMax.y + aabbMin.y) / 2.0, (aabbMax.z + aabbMin.z) / 2.0);
+            var edgeLength = aabbMax.x - aabbMin.x > aabbMax.y - aabbMin.y ? aabbMax.x - aabbMin.x : aabbMax.y - aabbMin.y;
+            edgeLength = edgeLength > aabbMax.z - aabbMin.z ? edgeLength : aabbMax.z - aabbMin.z;
+            edgeLength *= 3;
+
+            scene.add(new THREE.AmbientLight(0x888888));
+            var dirLight0 = new THREE.DirectionalLight( 0x888888, 1.5 );
+            dirLight0.position.set(10,10,10);
+            dirLight0.castShadow = true;
+            scene.add(dirLight0);
+
+            var dirLight1 = new THREE.DirectionalLight( 0x888888, 1.5 );
+            dirLight1.position.set(-10,10,-10);
+            scene.add(dirLight1);
+
+            var dirLight2 = new THREE.DirectionalLight( 0x888888, 1.5 );
+            dirLight2.position.set(10,-10,-10);
+            scene.add(dirLight2);
+
+            var dirLight3 = new THREE.DirectionalLight( 0x888888, 1.5 );
+            dirLight3.position.set(-10,-10,10);
+            scene.add(dirLight3);
+
+
+        });
+
+        cameraHUD = new THREE.OrthographicCamera(-800,
+            40,
+            40, -400,
+            0,
+            300
+        );
+        cameraHUD.position.y = 0;
+        cameraHUD.position.z = 100;
+        cameraHUD.position.x = 0;
+
+        LutCamera = new THREE.OrthographicCamera(-0,
+            23,
+            13, 5,
+            0,
+            300);
+        LutCamera.position.y = 0;
+        LutCamera.position.z = 5;
+        LutCamera.position.x = 0;
+
+        // Create also a custom scene for HUD.
+        sceneHUD = new THREE.Scene();
+
+
+        var materials = [];
+        for (var i = 0; i < 6; ++i) {
+            materials.push(new THREE.MeshBasicMaterial({
+                map: THREE.ImageUtils.loadTexture('img/' + i + '.jpg', {}, function() {
+                    renderer.render(scene, camera);
+                }),
+                overdraw: true,
+                side: THREE.DoubleSide
+            }));
+        }
+        var cubeHUD = new THREE.Mesh(new THREE.CubeGeometry(40, 40, 40), materials);
+        sceneHUD.add(cubeHUD);
+        objects.push(cubeHUD);
+
+        window.addEventListener('resize', onWindowResize, false);
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        window.addEventListener("keydown", onKeyDown, true);
+        var controls = new THREE.TrackballControls(camera, renderer.domElement);
+        controls.rotateSpeed = 6.0;
+        controls.staticMoving = true;
+
+
+        // Now we have two scenes. Only thing we need now is a render loop!
+        function animate() {
+            var dir = camera.getWorldDirection();
+            var pos = mash;
+            cameraHUD.rotation.x = camera.rotation.x;
+            cameraHUD.rotation.y = camera.rotation.y;
+            cameraHUD.rotation.z = camera.rotation.z;
+            cameraHUD.position.set(dir.x * -100.0, dir.y * -100.0, dir.z * -100.0);
+            controls.update();
+            // Render scene.
+            renderer.render(scene, camera);
+            // Render HUD on top of the scene.
+            renderer.render(sceneHUD, cameraHUD);
+            renderer.render(LutScene, LutCamera);
+
+
+            // stats.update();
+            // Request new frame.
+            requestAnimationFrame(animate);
+        }
+
+        function xx() {
+            document.getElementsByTagName("input").focus();
+            //			document.getElementById("ViewerModelStructurePanel").style.display = "none";
+        }
+
+
+        function cleanScene() {
+
+            var elementsInTheScene = scene.children.length;
+
+            for (var i = elementsInTheScene - 1; i >= 0; i--) {
+
+                if (scene.children[i].name != 'camera' &&
+                    scene.children[i].name != 'ambientLight' &&
+                    scene.children[i].name != 'directionalLight' &&
+                    scene.children[i].name != 'AmbientLight') {
+
+                    sceneVector.push(scene.children[i]);
+                    scene.remove(scene.children[i]);
+                }
+
+            }
+            for (var i = LutScene.children.length - 1; i >= 0; i--) {
+                LutScene.remove(LutScene.children[i]);
+            }
+        }
+
+
+
+        function updateLut(colorMap, numberOfColors, legendLayout, colorType,needUpdateGeometry) {
+
+            lut = new THREE.Lut(colorMap, numberOfColors);
+            var typeData = [];
+            for (var ct = 0; ct < scene.colorType.length; ct++) {
+                if (scene.colorType[ct].Name === colorType) {
+                    lutMin = scene.colorType[ct].Min;
+                    lutMax = scene.colorType[ct].Max;
+                    break;
+                }
+            }
+            if(lutMax === lutMin){
+                lutMax = lutMax + 1;
+                lutMin = lutMin -1;
+            }
+            lut.setMax(lutMax);
+            lut.setMin(lutMin);
+            if(needUpdateGeometry){
+                for (var i = 0, meshLength = scene.children.length; i < meshLength; i++) {
+                    if (scene.children[i].type != "Object3D" &&  scene.children[i].type != "Group") {
+                        break;
+                    }
+
+                    var geometry = scene.children[i].children[0].geometry;
+
+                    var postProcessData = geometry.postProcessData[colorType];
+                    if (undefined != postProcessData){
+                        //先看看之前有没有存储相关的数据信息，如果有避免重复获取
+                        //Map键值对的键值：后处理数据的类型 + lut的类型
+                        if(meshTypeColorMap[colorType + colorMap] != undefined)
+                        {
+                            geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( meshTypeColorMap[colorType + colorMap], 3 ) );
+                        }
+                        else {
+                            var colorArray = new Array(postProcessData.length * 3);
+                            for(var ppd = 0; ppd < postProcessData.length; ppd ++){
+                                var color = lut.getColor(postProcessData[ppd]);
+                                colorArray[ppd * 3 + 0] = color.r;
+                                colorArray[ppd * 3 + 1] = color.g;
+                                colorArray[ppd * 3 + 2] = color.b;
+                            }
+                            geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( colorArray, 3 ) );
+                            meshTypeColorMap[colorType + colorMap] = colorArray;
+                        }
+                    }
+
+                    geometry.elementsNeedUpdate = true;
+                }
+            }
+
+            if (legendLayout) {
+                if (legendLayout == 'horizontal') {
+                    legend = lut.setLegendOn({
+                        'layout': 'horizontal',
+                        'position': {
+                            'x': 21,
+                            'y': 6,
+                            'z': 5
+                        }
+                    });
+                } else {
+                    legend = lut.setLegendOn();
+                }
+                LutScene.add(legend);
+            }
+
+            labels = lut.setLegendLabels({
+                // 'title': 'Pressure',
+                'title': colorType,
+                'um': 'Pa',
+                'ticks': 5,
+                'notation':'scientific',
+            });
+
+            LutScene.add(labels['title']);
+
+            for (var i = 0; i < Object.keys(labels['ticks']).length; i++) {
+
+                LutScene.add(labels['ticks'][i]);
+                LutScene.add(labels['lines'][i]);
+            }
+            lutSceneVector.splice(0,lutSceneVector.length);
+            sceneVector.splice(0, sceneVector.length);
+        }
+
+
+        (function() {
+            document.getElementsByTagName("input").focus();
+        })
+        $(function() {
+            $("#tree").dynatree({
+                checkbox: true,
+                selectMode: 3,
+                initAjax: {
+                    url: productStructureFile
+                },
+                onSelect: function(select, node) {
+                    if (node.data.isFolder) {
+                        node.visit(function(childNode) {
+                            if (!childNode.data.isFolder) {
+                                layerName = childNode.data.title
+                                while (childNode.getLevel() > 2) {
+                                    childNode = childNode.getParent();
+                                    layerName = childNode.data.title + "-" + layerName;
+                                }
+                                layerName = layerName.replace(/[:;]/g, "-");
+                                geometryArray[layerName].visible = select;
+                            }
+                        });
+                    } else {
+                        layerName = node.data.title
+                        while (node.getLevel() > 2) {
+                            node = node.getParent();
+                            layerName = node.data.title + "-" + layerName;
+                        }
+                        layerName = layerName.replace(/[:;]/g, "-");
+                        geometryArray[layerName].visible = select;
+                    }
+                }
+            });
+        });
+        animate();
+    </script>
+</body>
+
+</html>
