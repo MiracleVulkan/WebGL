@@ -1,11 +1,30 @@
 {
     "goods": [
-        { "price": "69.9", "title": "德芙", "img": "fault1.jpg" },
-        { "price": "63", "title": "费列罗", "img": "fault2.jpg"},
-        { "price": "29.9", "title": "大米", "img": "fault3.jpg"},
-        { "price": "54.9", "title": "安慕希", "img": "fault4.jpg"}
+        { "price": "69.9", "title": "差错", "img": "fault1.jpg", "content": "小磕碰：对磕碰处进行圆滑过渡处理，并探伤确认无裂纹缺陷；", "chapter": ["差错", "刮磨", "锁紧装置异常", "叶片腐蚀"] },
+        { "price": "29.9", "title": "大米", "img": "fault3.jpg", "content": "确认叶片汽道、围带下表面是否有异物，若有则清理，并判断是什么" },
+        { "price": "54.9", "title": "安慕希", "img": "fault4.jpg", "content": "查找造成叶片损伤原因，并与哈汽公司联系，尽量避免再次发生。" }
     ],
-    "resolution":[
-    {"title":"hello", "img":"fault5.jpg"}
+    "resolution": [
+        { "title": "hello", "img": "fault5.jpg" }
+    ],
+    "inspection":[
+        {
+            "mode":"调节级动叶片检查",
+             "childMode":[{
+                "mode":"对叶片进行外观目视检查",
+                "childMode":["叶片有无明显外观缺陷，如磕碰、缺口等",
+                "围带顶部是否有与汽封刮磨情况",
+                "检查锁紧装置是否有异常情况",
+                "检查叶片是否有腐蚀情况",
+                "叶片围带是否有错牙情况"]
+            },
+        {
+            "mode":"对叶片进行进行探伤检查",
+            "childMode":[
+                "当较多叶片受异物打伤时，需要对整圈叶片进行探伤检查"
+            ]
+            
+        }]
+        }
     ]
 }
