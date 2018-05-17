@@ -8,7 +8,10 @@ import router from './router'
 import VueResource from 'vue-resource'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
+import 'vue-tree-halower/dist/halower-tree.min.css' // you can customize the style of the tree
+import VTree from 'vue-tree-halower'
 
+Vue.use(VTree)
 Vue.use(ElementUI);
 Vue.use(VueResource)
 

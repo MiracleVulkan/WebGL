@@ -4,13 +4,13 @@
       <img src="../assets/logo.png" @click="modelhtml">
       <img src="../assets/logo.png" @click="$goRoute('/fault1')">
       <div class="fault">
-        <img :src="imgsrc.src" v-for="imgsrc in imginformation" @click="showinfo(imgsrc,'fault')">
+        <img :src="imgsrc.src" v-for="imgsrc in imginformation" @click="$goRoute('/fault2')">
       </div>
       <div class="resolution">
         <!-- <img :src="imgsrc.src" v-for="imgsrc in imginformation" @click="showinfo(imgsrc,'resolution')"> -->
         <img :src="imgsrc.src" v-for="imgsrc in imginformation" @click="$goRoute(imgsrc.path)">
       </div>
-      <modal :dialogtablevisible="dialogtablevisible" :showmode="showmode" @updatevalue="updatevalue"></modal>
+      <!-- <modal :dialogtablevisible="dialogtablevisible" :showmode="showmode" @updatevalue="updatevalue"></modal> -->
     </div>
   </div>
 </template>
@@ -53,7 +53,6 @@ export default {
         imginfo.path = this.imgsrcs[i].path;
         imgtemp.push(imginfo);
       }
-      console.log(imgtemp);
       return imgtemp;
     },
 

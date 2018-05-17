@@ -12,6 +12,7 @@ const express = require('express')
 const app = express()
 var appData = require('../data.json')//加载本地数据文件
 var goods = appData.goods
+var inspection = appData.inspection
 var apiRoutes = express.Router()
 app.use('/api', apiRoutes)
 
@@ -50,6 +51,12 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         res.json({
           code: 0,
           data: goods
+        })
+      }),
+      app.get('/api/inspection', (req, res) => {
+        res.json({
+          code: 0,
+          data: inspection
         })
       })
     } 

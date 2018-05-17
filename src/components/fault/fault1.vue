@@ -43,11 +43,9 @@ export default {
           let object = {};
           object.img = require("../../assets/" + this.items[index].img);
           object.content = this.items[index].content;
-          console.log(this.items[index].chapter);
           imginfo.push(object);
           
         }
-        console.log(imginfo);
         return imginfo;
       }
     }
